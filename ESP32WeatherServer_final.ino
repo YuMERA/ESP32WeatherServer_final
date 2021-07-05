@@ -261,7 +261,7 @@ void setup() {
   spln(" HTTP web server started\n");
 
   configTime(timezone, dst, "pool.ntp.org","time.nist.gov");  // uzimam vreme sa interneta na osnovu moje vremenske zone
-  sp(" Waiting for Internet time ");                         // i da li se koristi letnje racunjanje vremena
+  sp(" Waiting for Internet time ");                          // i da li se koristi letnje racunjanje vremena
 
   while(!time(nullptr)){
     sp(".");
