@@ -15,7 +15,6 @@ const char index_html[] PROGMEM = R"=====(
                         AAARERERAAAAABEREREAAAAAEREREQAAAAARERERAAAAABEREREAARAAEREREQAREQARERERAREREBERERERERERERER
                         EREREREREREREREREREREREREAEREREREREAABEREREREAAAAREREREAAAAAEREP8AAAD/AAAA/wAAAP8AAAD/AAAA/w
                         AAAOcAAADDAAAAgQAAAAAAAAAAAAAAAAAAABgAAAA8AAAAfgAAAP8AAA" rel="icon" type="image/x-icon" />
-        
         </head>
         <body>
             <div class='container'>
@@ -154,7 +153,6 @@ const char about_html[] PROGMEM = R"=====(
                         AAARERERAAAAABEREREAAAAAEREREQAAAAARERERAAAAABEREREAARAAEREREQAREQARERERAREREBERERERERERERER
                         EREREREREREREREREREREREREAEREREREREAABEREREREAAAAREREREAAAAAEREP8AAAD/AAAA/wAAAP8AAAD/AAAA/w
                         AAAOcAAADDAAAAgQAAAAAAAAAAAAAAAAAAABgAAAA8AAAAfgAAAP8AAA" rel="icon" type="image/x-icon" />
-            
             <style>
                 .about-title {margin: 30px; text-align: center;}
                 .about-title h1 {font-size: 36px; color: #eb6206;}
@@ -253,7 +251,6 @@ const char min_html[] PROGMEM = R"=====(
                         AAARERERAAAAABEREREAAAAAEREREQAAAAARERERAAAAABEREREAARAAEREREQAREQARERERAREREBERERERERERERER
                         EREREREREREREREREREREREREAEREREREREAABEREREREAAAAREREREAAAAAEREP8AAAD/AAAA/wAAAP8AAAD/AAAA/w
                         AAAOcAAADDAAAAgQAAAAAAAAAAAAAAAAAAABgAAAA8AAAAfgAAAP8AAA" rel="icon" type="image/x-icon" />
-
             <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,600' rel='stylesheet'>
             <style>
                 html { font-family: 'Open Sans', sans-serif; display: block; margin: 0px auto; text-align: center;color: #444444;}

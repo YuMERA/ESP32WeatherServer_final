@@ -1,5 +1,4 @@
-const char style_css[] PROGMEM = R"=====(
-* {padding: 0; margin: 0;}
+const char style_css[] PROGMEM = R"=====(* {padding: 0; margin: 0;}
 body {font-family: Helvetica, sans-serif;font-size: 13px;}
 .container {margin: auto; width: 93%; border: 1px solid gray; background-color:white;}
 .container h2, h3 {margin: 5px;}

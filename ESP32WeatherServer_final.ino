@@ -1,4 +1,30 @@
-    
+/*
+    Server program koji upravlja merenjem jedne meteo stanic u mom dvoristu.
+    Hardwer servera je ESP32 koji se nalazi u kuci u blizini wifi rutera i 
+    24h je dostupan direktno preko ip adrese : http://109.94.233.37:3003/ ili 
+    putem redirektovanog domena : http://meteostanica-sid.ddns.net/.
+    Drugi modul koji je ESP8266 nalazi se u samoj meteo kucici i radi kao klijent
+    koji svakih 10 min salje izmerene meteoroloske podatke na server a server ih 
+    cini dostupnim za pristup putem interneta preko navedenih linkova.
+ 
+    Program se moze koristitu i u neke vase svrhe koje su slicnog karaktera i 
+    namene bez da morate bilo koga da obavestite o tome.
+
+   Copyright (C) 2021.  me[R]a
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/
+*/    
   //#define ESP8266
   #if defined(ESP8266)
     #include <ESP8266WiFi.h>
@@ -165,50 +191,58 @@
 
 
 void setup() {
+  delay(5000);
   Serial.begin(115200);
+  // obavest o programu i garanciji !!!
+  Serial.println("\n\n...................................................................");
+  Serial.println(".   MeteoMera v2.1  Copyright (C) 2021. me[R]a                    .");
+  Serial.println(".   This program comes with ABSOLUTELY NO WARRANTY                .");
+  Serial.println(".   This is free software, and you are welcome to redistribute    .");
+  Serial.println(".   it under certain conditions                                   .");
+  Serial.println("...................................................................\n\n");
+  
   for(uint8_t t = 4; t > 0; t--) {
-    spf("   [SETUP] WAIT %d...\n", t);
+    spf("   [StartUp] WAIT %d...\n", t);
     Serial.flush();
     delay(1000);
   }
     
-  spln("\n\tESP AP & Station & UDP/TCP System");
-
 // Start wifi konekcije sa mojim ruterom
 //------------------------------------------------------------------
   WiFi.config(mystaticip, mygateway, mysubnet, mygateway);
   WiFi.mode(WIFI_AP_STA);//WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, passphrase);
   
-  spf("\tStation connecting to %s WiFi\n\n", ssid);
+  spf("\n Station connecting to %s SSID\n", ssid);
 
   if (testWifi()){
     spln(" success!");
     spln(" -------------------------------------------------------");
-    sp("  Station connected, IP address: ");
+    sp("   Station connected, IP address: ");
     spln(WiFi.localIP());
-    spf("  Signal Strength: %d dBm\n", WiFi.RSSI());
-    sp("  ESP Board MAC Address:  ");
+    spf("   Signal Strength: %d dBm\n", WiFi.RSSI());
+    sp("   ESP Board MAC Address:  ");
     spln(WiFi.macAddress());
   }else{
+    spln(" failed!");
     spln(" ESP goes to restart");
     ESP.restart();
   }
 
 // Configure the Soft Access Point.
 //---------------------------------------------------------------------------------------------------------------------
-  sp("  Soft-AP configuration ... ");
+  sp("   Soft-AP configuration ... ");
   spln(WiFi.softAPConfig(APlocal_IP, APgateway, APsubnet) ? "OK" : "Failed!"); // configure network
-  sp("  Setting soft-AP ... ");
+  sp("   Setting soft-AP ... ");
   spln(WiFi.softAP(APssid, APpassword , 1, 1, 1) ? "OK" : "Failed!"); // Setup the Access Point chanel 1 and SSID hide
-  sp("  Soft-AP IP address = ");
+  sp("   Soft-AP IP address = ");
   spln(WiFi.softAPIP()); // Confirm AP IP address
   spln(" -------------------------------------------------------");
 
 // Kreiram url na weather server sa kojeg preuzimam podatatke u JSON formatu
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-  url_ow += "http://" + String(server_ow) + "/data/2.5/weather?lat=" +String(lat,6)+ "&lon=" +String(lon,6)+ "&units=" + unit_type+ "&appid="+ api_key;
-  url_uv += "http://" + String(server_ow) + "/data/2.5/uvi?appid="+ api_key+ "&lat=" +String(lat,2)+ "&lon=" +String(lon,2);
+  url_ow += "http://" + String(server_ow) + "/data/2.5/weather?lat=" + String(lat,6) + "&lon=" + String(lon,6) + "&units=" + unit_type + "&appid=" + api_key;
+  url_uv += "http://" + String(server_ow) + "/data/2.5/uvi?appid=" + api_key + "&lat=" + String(lat,2) + "&lon=" + String(lon,2);
 
 // Odgovar web servera u zavisnosti od pristupa nekoj od strana
 //---------------------------------------------------------------------------------------
@@ -226,14 +260,14 @@ void setup() {
   
   spln(" HTTP web server started\n");
 
-  configTime(timezone, dst, "pool.ntp.org","time.nist.gov");  // uzimam vreme sa interneta na osvovu moje vremenske zone
-  spln(" Waiting for Internet time");                         // i da li se koristi letnje racunjanje vremena
+  configTime(timezone, dst, "pool.ntp.org","time.nist.gov");  // uzimam vreme sa interneta na osnovu moje vremenske zone
+  sp(" Waiting for Internet time ");                         // i da li se koristi letnje racunjanje vremena
 
   while(!time(nullptr)){
-    sp("*");
+    sp(".");
     delay(100);
   }
-  spln(" Time response....OK!\n");   
+  spln("\n Response requires time is OK!\n");   
   delay(100);
   
   getWeatherCondition();
@@ -244,7 +278,7 @@ void setup() {
 //----------------------------------------------------------------
 bool testWifi(void){
   int c = 0;
-  sp(" Waiting for WiFi to connect ");
+  sp(" Waiting for connection data ");
   while ( c < 20 ) {
     if (WiFi.status() == WL_CONNECTED)
     {
@@ -270,26 +304,27 @@ void getIpCondition(){
   //------------------------------------------------------------------------
   if (WiFi.status() == WL_CONNECTED) {
     //http://ip-api.com/docs/api:json#test
-    String  url_ip_api = "http://ip-api.com/json/";
-            url_ip_api += String(cIp)+ "?fields=country,countryCode,region,regionName,city,timezone,isp,query,status,message";
-    spln (" Json URL for ip-api: " + url_ip_api);
+    char url_ip_api[128];
+    sprintf(url_ip_api,"http://ip-api.com/json/%s?fields=country,countryCode,region,regionName,city,timezone,isp,query,status,message",cIp.c_str()); 
+    spln (" Json URL for ip-api: " +  String(url_ip_api));
+    
     HTTPClient http;  // Deklarisanje objekta na class HTTPClient
     #if defined(ESP8266)
       WiFiClient client;
-      http.begin(client,url_ip_api);
+      http.begin(client, url_ip_api);
     #else
       http.begin(url_ip_api);
     #endif
     
     int httpCode = http.GET();
-    spln(" Response ; " + String(httpCode));
+    spln(" Response : " + ((httpCode == 200) ? "Ok! {code:200}" : String(httpCode)));
 
     if (httpCode > 0) {
       String payload = http.getString();
       const size_t bufferSize = JSON_OBJECT_SIZE(9) + 308;
       DynamicJsonDocument doc(bufferSize);
       const char* json = payload.c_str();
-      spln( " Json data : " + String(json));
+      spln(" Json data : " + String(json));
       deserializeJson(doc, json);
       
       // Root object
@@ -308,16 +343,16 @@ void getIpCondition(){
       }
       spln(" JSon data from IP client");
       spln(" -------------------------------------------------------");
-      spln(" Query       : " + ip_query);
-      spln(" Status      : " + ip_status);
-      spln(" Country     : " + ip_country);
-      spln(" Country code: " + ip_countryCode);
-      spln(" Region      : " + ip_region);
-      spln(" Region name : " + ip_regionName);
-      spln(" City        : " + ip_city);
-      spln(" Time zone   : " + ip_timezone);
-      spln(" ISP         : " + ip_isp);
-      spln(" Message     : " + ip_message);
+      spln("   Query       : " + ip_query);
+      spln("   Status      : " + ip_status);
+      spln("   Country     : " + ip_country);
+      spln("   Country code: " + ip_countryCode);
+      spln("   Region      : " + ip_region);
+      spln("   Region name : " + ip_regionName);
+      spln("   City        : " + ip_city);
+      spln("   Time zone   : " + ip_timezone);
+      spln("   ISP         : " + ip_isp);
+      spln("   Message     : " + ip_message);
       spln(" -------------------------------------------------------");
     }
     http.end();   // Close connection
@@ -326,7 +361,7 @@ void getIpCondition(){
   char buf[400];
   sprintf(buf,"INSERT INTO nUm8euijbj.ip_client (ip_query,ip_status,ip_country,ip_countryCode,ip_region,ip_regionName,ip_city,ip_timezone,ip_isp,ip_message) "
               "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" , 
-              ip_query.c_str(), ip_status, ip_country, ip_countryCode, ip_region, ip_regionName, ip_city, ip_timezone.c_str(), ip_isp.c_str(), ip_message.c_str()); 
+              ip_query.c_str(), ip_status, ip_country, ip_countryCode, ip_region, ip_regionName.c_str(), ip_city, ip_timezone.c_str(), ip_isp.c_str(), ip_message.c_str()); 
   
   spln("\n Send client data to MySQL database.");
   
@@ -336,11 +371,16 @@ void getIpCondition(){
     cursor->execute("SET character_set_client = 'UTF8MB4';");
     cursor->execute("SET character_set_connection='UTF8MB4';");
     cursor->execute("SET character_set_results='UTF8MB4';");
-    cursor->execute(buf);
+    
+    spln(" SQL Query : " + String(buf));
+    if(cursor->execute(buf)){
+      spln(" Success stored IP condition data to MySQL database.\n");
+    }else{
+      spln(" IP data record failed!");
+    }
     delay(50);
     delete cursor;
-    spln(" SQL Query : " + String(buf));
-    spln(" Success stored IP Condition data to MySQL database.\n");
+
   }else{
     spln(" Connection failed.\n");
     conn.close();          
@@ -362,13 +402,10 @@ void getWeatherCondition(){// Json podaci koje preuzimam sa drugih meteo servera
     #endif
 
     int httpCode = http.GET();
-    
-    spln(" Response : " + String(httpCode));
-    
+    spln(" Response : " + ((httpCode == 200) ? "Ok! {code:200}" : String(httpCode)));
+
     if (httpCode > 0) {
-      
       String payload = http.getString();// Get payload
-      
       const size_t bufferSize = JSON_ARRAY_SIZE(1) + JSON_OBJECT_SIZE(1) + 2*JSON_OBJECT_SIZE(2) + // JSON buffer 
       JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(6) + JSON_OBJECT_SIZE(12) + 355;
       DynamicJsonDocument doc(bufferSize); 
@@ -431,11 +468,10 @@ void getWeatherCondition(){// Json podaci koje preuzimam sa drugih meteo servera
   #endif
 
   int httpCode = http.GET();
-  spln(" Response ; " + String(httpCode));
+  spln(" Response : " + ((httpCode == 200) ? "Ok! {code:200}" : String(httpCode)));
+
   if (httpCode > 0) {
-    
     String payload = http.getString();// Get payload
-    
     const size_t bufferSize = JSON_OBJECT_SIZE(5) + 172;// JSON buffer
     DynamicJsonDocument doc(bufferSize);
     
@@ -455,37 +491,83 @@ void getWeatherCondition(){// Json podaci koje preuzimam sa drugih meteo servera
 
     // Vrednost UV indexa http://www.hidmet.gov.rs/ciril/prognoza/uv1.php
     if (uv_index.toInt() >= 11)
-      uv_index_description = "Ekstremno visoka"; 
+      uv_index_description = "Ekstremno visok"; 
     else if(uv_index.toInt() >= 8 || uv_index.toInt() <= 10)
-      uv_index_description = "Vrlo visoka";
+      uv_index_description = "Vrlo visok";
     else if(uv_index.toInt() >= 6 || uv_index.toInt() <= 7)
-      uv_index_description = "Visoka"; 
+      uv_index_description = "Visok"; 
     else if(uv_index.toInt() >= 3 || uv_index.toInt() <= 5)
-      uv_index_description = "Umerena"; 
+      uv_index_description = "Umeren"; 
     else if(uv_index.toInt() >= 0 || uv_index.toInt() <= 2)
-      uv_index_description = "Niska";  
-     
+      uv_index_description = "Nizak";  
   }
   http.end();
 }
 
-void handleJson(){// Kreiram stranu na kojoj je sano text po Json standardu. Ovo za preuzimanje izmerenih vrednosti za potrebe trece strane
-  server.send(200, "text/html", json_html);
+void handleJson(){// Kreiram stranu na kojoj je samo text po Json standardu. Ovo za preuzimanje izmerenih vrednosti za potrebe trece strane
+  char content[1280];
+  int statusCode = 200;
+  sprintf(content, "{\n"
+                   "    \"station\": {\n"
+                   "        \"name\": \"Meteo Station MERA\",\n"
+                   "        \"city\": \"Šid\",\n"
+                   "        \"link\": \"http://109.94.233.37:3003/\",\n"
+                   "        \"lat\": %f,\n"
+                   "        \"lon\": %f,\n"
+                   "        \"alt\": %s\n"
+                   "    },\n"
+                   "    \"weather\": {\n"
+                   "        \"basic\": {\n"
+                   "            \"temperature\": {\n"
+                   "                \"value\": %s,\n"
+                   "                \"units\": \"°C\"\n"
+                   "            },\n"
+                   "            \"humadity\": {\n"
+                   "                \"value\": %s,\n"
+                   "                \"units\": \"%%\"\n"
+                   "            },\n"
+                   "            \"pressure\": {\n"
+                   "                \"value\": %s,\n"
+                   "                \"units\": \"hPa\"\n"
+                   "            }\n"
+                   "        },\n"
+                   "        \"extend\": {\n"
+                   "            \"airquality\": {\n"
+                   "                \"pm1\": %s,\n"
+                   "                \"pm2.5\": %s,\n"
+                   "                \"pm10\": %s,\n"
+                   "                \"units\": \"µg/m³\"\n"
+                   "            },\n"
+                   "            \"uvindex\": %s,\n"
+                   "            \"wind\": {\n"
+                   "                \"direction\": \"%s\",\n"
+                   "                \"speed\": %s,\n"
+                   "                \"units\": \"m/s\"\n"
+                   "            },\n"
+                   "            \"cloudines\": %s,\n"
+                   "            \"sunrise\": \"%s\",\n"
+                   "            \"sunset\": \"%s\"\n"
+                   "        },\n"
+                   "        \"time\": \"%s\"\n"
+                   "    }\n"
+                   "}",lat,lon,Alt,Tem,Hum,Pre,pm1_kli,pm25_kli,pm10_kli,uv_index,symbolWindDir,Win1,String(clouds),sunrise,sunset,lastTime);
+
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(statusCode, "application/json; charset=UTF-8", content);
 }
 
 void handleKli() { // Kad stignu podaci sa klimerka
   time_t now = time(nullptr);
   struct tm* p_tm = localtime(&now);
-  sprintf(lastTimeKli,"%2d:%02d - %02d.%02d.%04d.", (p_tm->tm_hour+UTC)%24, p_tm->tm_min, ((p_tm->tm_hour+UTC)%24 == 0) ? p_tm->tm_mday +1 : p_tm->tm_mday,
+  sprintf(lastTimeKli,"%2d:%02d - %02d.%02d.%04d.", (p_tm->tm_hour + UTC) % 24, p_tm->tm_min, ((p_tm->tm_hour + UTC) % 24 == 0) ? p_tm->tm_mday + 1 : p_tm->tm_mday,
           p_tm->tm_mon+1,(p_tm->tm_year + 1900));
-
-  
+ 
   String message = " Number of args received from klimerko : ";
   message += server.args();                     // Ukupan broj svih parametara koji se potrazuju
   message += "\n";                            
   message += " -------------------------------------------------------------------\n";
   for (int i = 0; i < server.args(); i++) {
-    message += "  Arg nº" + (String)i + " -> "; // Redni broj parametra
+    message += "   Arg nº" + (String)i + " -> "; // Redni broj parametra
     message += server.argName(i) + ": ";        // Naziv za parametar
     message += server.arg(i) + "\n";            // Vrednost parametra
     delay(10);
@@ -501,7 +583,7 @@ void handleKli() { // Kad stignu podaci sa klimerka
   pre_kli  = server.arg("Pressure");            // server.arg(5);
 
   int pm10 = pm10_kli.toInt();
-  // Assign a text value of how good the air is based on average value
+  // tekstualna vrednost kvalitea vazduha po standardu
   // http://www.amskv.sepa.gov.rs/kriterijumi.php
   if (pm10 <= 20) {
     airQuality = "Excellent";       // Kvalitet vazduha
@@ -523,8 +605,7 @@ void handleKli() { // Kad stignu podaci sa klimerka
     airQuality = "Very Polluted";
     _airQuality = "Jako Zagađen";
     _color = "Red";
-  }
-      
+  }    
   server.send(200, "text/plain", "OK!"); // Send HTTP status 200 (Ok) and send some text to the browser/client
 }
 
@@ -534,13 +615,12 @@ void handleInput() {// Ovde se hendluje strana kada dolaze izmerene vrednosti
   sprintf(lastTime,"%2d:%02d - %02d.%02d.%04d.", (p_tm->tm_hour+UTC)%24, p_tm->tm_min, ((p_tm->tm_hour+UTC)%24 == 0) ? p_tm->tm_mday +1 : p_tm->tm_mday,
           p_tm->tm_mon+1,(p_tm->tm_year + 1900));
 
-
   String message = " Number of args received : ";
   message += server.args();                     // Ukupan broj svih parametara koji se potrazuju
   message += "\n";                        
   message += " -------------------------------------------------------------------\n";
   for (int i = 0; i < server.args(); i++) {
-    message += "  Arg nº" + (String)i + " -> "; // Redni broj parametra
+    message += "   Arg nº" + (String)i + " -> "; // Redni broj parametra
     message += server.argName(i) + ": ";        // Naziv za parametar
     message += server.arg(i) + "\n";            // Vrednost parametra
     delay(10);
@@ -562,19 +642,12 @@ void handleInput() {// Ovde se hendluje strana kada dolaze izmerene vrednosti
 
   // Slanje podataka na moj kanal na ThingSpeak
   //-----------------------------------------------------------
-  String thingSpeak = String(thingSpeakAddress); 
-          thingSpeak += "/update?api_key=" + String(writeAPIKey);
-          thingSpeak += "&field1=" +  Tem;
-          thingSpeak += "&field2=" +  Hum;
-          thingSpeak += "&field3=" +  Pre;
-          thingSpeak += "&field4=" +  Win1;
-          thingSpeak += "&field5=" +  uv_index;
-          thingSpeak += "&field6=" +  Vcc;
-          thingSpeak += "&field7=" +  Rsi;
-
+  char thingSpeak[256];
+  sprintf(thingSpeak,"%s/update?api_key=%s&field1=%s&field2=%s&field3=%s&field4=%s&field5=%s&field6=%s&field71=%s",
+                      thingSpeakAddress,writeAPIKey,Tem,Hum,Pre,Win1,uv_index,Vcc,Rsi);
   spln (" Send data to ThingSpeak my channel");
-  spln (" Link : " + thingSpeak); 
-      
+  spln (" Link : " + String(thingSpeak)); 
+
   HTTPClient http;
       
   #if defined(ESP8266)
@@ -585,8 +658,8 @@ void handleInput() {// Ovde se hendluje strana kada dolaze izmerene vrednosti
   #endif
 
   int httpCode = http.GET();
+  spln(" Response : " + ((httpCode == 200) ? "Ok! {code:200}" : String(httpCode)));
   
-  spln(" Response ; " + String(httpCode));
   if (httpCode > 0) {
     spln(" Data sent successfully\n");
   }else{
@@ -599,24 +672,29 @@ void handleInput() {// Ovde se hendluje strana kada dolaze izmerene vrednosti
   char buf[512];
   sprintf(buf, "INSERT INTO nUm8euijbj.meteo_data (Temperature,Humidity,Pressure,WinSpeed,UVindex,Voltage,RSSI,TempInCase,wMain,wIcon,PM10,PM1,PM25,K_Tem,K_Hum,K_Pre) "
                 "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s, %s, %s, %s, %s)" ,
-                Tem, Hum, Pre, Win1, uv_index, Vcc, Rsi, Tmb, weather_main, txtIconWeather.c_str(), pm10_kli, pm1_kli, pm25_kli, tem_kli, hum_kli, pre_kli);
+                Tem, Hum, Pre, Win1, String(uv_index.toFloat(),1), Vcc, Rsi, Tmb, weather_main, txtIconWeather.c_str(), pm10_kli, pm1_kli, pm25_kli, tem_kli, Hum, pre_kli);
   
   // Connecting to SQL 
   //---------------------------------------------------------------
   spln(" Send measured meteo data to MySQl database.");
   MySQL_connect();
       
-  if (conn.connected()){
+  if (conn.connected()){//ako je konekcija na bazu uspesna
     //cursor->execute("SET time_zone = '+02:00';");//("SET @@session.time_zone = '+02:00'");//Setovanje time zone za citanje podataka zbog vremenske razlike sa serverom
     cursor->execute("SET character_set_client = 'UTF8MB4';");
     cursor->execute("SET character_set_connection = 'UTF8MB4';");
     cursor->execute("SET character_set_results = 'UTF8MB4';");
-    cursor->execute(buf);
+    
+    spln(" SQL Query : " + String(buf));
+    if(cursor->execute(buf)) { // SQL upit uspesan
+      spln(" Recording data to MySQL server successfully.\n");
+    }else{ // SQL upit ne uspesan
+      spln(" An attempt to save data to the database failed!");
+    }
     delay(50);
     delete cursor;
-    spln(" SQL Query : " + String(buf));
-    spln(" Recording data.\n");
-  }else{
+
+  }else{// konekcija na bazu ne uspesna
     spln("Connection failed.\n");
     conn.close();          
   }
@@ -640,7 +718,7 @@ void handleRoot() {// Osnovna starnica web sajta
   // Tabela
   //---------------------------------------------------------------------------
   s.replace("@@h_tem@@",Tem);           // Temperatura
-  s.replace("@@h_hum@@",Hum);           // Vlaznost vazduha
+  s.replace("@@h_hum@@",Hum);       // Vlaznost vazduha (preuzimam sa klimerkovog BME jer u meteo kucici drugi bme ne pokazuje dobro)
   s.replace("@@h_pre@@",Pre);           // Atmosferski pritisak
   s.replace("@@h_winsm@@",Win1);        // Brzina vetra
   s.replace("@@h_wins@@",wind_deg);     // Smer vetra
@@ -681,11 +759,11 @@ void handleRoot() {// Osnovna starnica web sajta
   // Klimerko
   //---------------------------------------------------------------------------
   s.replace("@@k_color@@",_color);      // Boja teksta za prikaz zagadjenosti
-  s.replace("@@k_air@@",airQuality);    // Kvalitet vazduha EN
-  s.replace("@@k_airs@@",_airQuality);  // Kvaltet vazduha SR
-  s.replace("@@k_pm1@@",pm10_kli);      // PM10
-  s.replace("@@k_pm2@@",pm25_kli);      // PM2.5
-  s.replace("@@k_pm0@@",pm1_kli);       // PM1
+  s.replace("@@k_air@@",airQuality);    // Kvalitet vazduha EN text
+  s.replace("@@k_airs@@",_airQuality);  // Kvaltet vazduha SR text
+  s.replace("@@k_pm1@@",pm10_kli);      // PM10 vrednost
+  s.replace("@@k_pm2@@",pm25_kli);      // PM2.5 vrednost
+  s.replace("@@k_pm0@@",pm1_kli);       // PM1 vrednost
   s.replace("@@k_last@@",lastTimeKli);  // Zadnje merenje kvaliteta vazduha
   
   // Your IP adress
@@ -738,11 +816,11 @@ void handleCss() {// Ovde koristim standarni style.css file
 }*/
 
 void MySQL_connect(){
-  sp(" Server : ");
+  sp("   Server : ");
   spln(server_addr);
-  spf(" User   : %s\n",user);
-  spf(" Pass   : %s\n",password);
-  sp(" Connecting...");
+  spf("   User   : %s\n",user);
+  spf("   Pass   : %s\n",password);
+  sp(" Connecting ");
   if (conn.connect(server_addr, 3306, user, password)){
     //spln(" OK!\n");
   }else
