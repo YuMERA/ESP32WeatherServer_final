@@ -76,7 +76,7 @@ const char index_html[] PROGMEM = R"=====(
                         <p>Latitude: <b>@@n_lat@@°N</b></p>
                         <p>Longitude: <b>@@n_lon@@°E</b></p>
                         <p>Sunrise (izlazak sunca) : <b>@@n_izl@@</b></p>
-                        <p>Sunset (zalazak sunca) : <b>@@n_zal@@</b></p><br>
+                        <p>Sunset (zalazak sunca) : <b>@@n_zal@@</b></p>
                     </div>
                     <div class="klimerko">
                         <a href='https://klimerko.org/' target='_blank' title='Vazduh građanima'>Klimerko</a>
@@ -87,6 +87,15 @@ const char index_html[] PROGMEM = R"=====(
                             <tr><td>PM1</td><td style="text-align: right;"><b>@@k_pm0@@ µg/m³</b></td></tr>
                             <tr><td>PM2.5</td><td style="text-align: right;"><b>@@k_pm2@@ µg/m³</b></td></tr>
                             <tr><td>PM10</td><td style="text-align: right;"><b>@@k_pm1@@ µg/m³</b></td></tr>
+                        </table>
+                        <hr>
+                        <table style="width: 100%;margin: 5px 0px; padding: 3px; font-size: 12px;">
+                            <tr><td><b>CO<sub></sub></b><i> (Carbon monoxide)</i></td><td style="text-align: right;"><b>@@cmp_co@@ µg/m³</b></td></tr>
+                            <tr><td><b>NO<sub></sub></b><i> (Nitrogen monoxide)</i></td><td style="text-align: right;"><b>@@cmp_no@@ µg/m³</b></td></tr>
+                            <tr><td><b>NO<sub>2</sub></b><i> (Nitrogen dioxide)</i></td><td style="text-align: right;"><b>@@cmp_no2@@ µg/m³</b></td></tr>
+                            <tr><td><b>O<sub>3</sub></b><i> (Ozone)</i></td><td style="text-align: right;"><b>@@cmp_o3@@ µg/m³</b></td></tr>
+                            <tr><td><b>SO<sub>2</sub></b><i> (Sulphur dioxide)</i></td><td style="text-align: right;"><b>@@cmp_so2@@ µg/m³</b></td></tr>
+                            <tr><td><b>NH<sub>3</sub></b><i> (Ammonia)</i></td><td style="text-align: right;"><b>@@cmp_nh3@@ µg/m³</b></td></tr>
                         </table>
                         <hr>
                         <p style="margin: 5px 0px; font-size: 11px;">Zadnje merenje : @@k_last@@</p>
