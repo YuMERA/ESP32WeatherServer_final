@@ -10,7 +10,7 @@
     Program se moze koristitu i u neke vase svrhe koje su slicnog karaktera i 
     namene bez da morate bilo koga da obavestite o tome.
 
-   Copyright (C) 2021.  me[R]a
+    Copyright (C) 2021.  me[R]a
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -76,9 +76,10 @@
   #define lon 19.242530         // longitude for Sid,RS
   String url_ow = "";           // URL for HTTP get weather data
   String url_uv = "";           // URL for HTTP get uv index data
+  String url_air = "";          // URL for Air Pollution
   const char *server_ow = "api.openweathermap.org";
-  unsigned long id_city = 3190922; //Id za Sid   
-  const char *api_key = "d8b774acf13f2ea889a3950c2c2a89c1"; //REPLACE_WITH_YOUR_API_KEY;
+  unsigned long id_city = 3190922;// Id za Sid   
+  const char *api_key = "d8b774acf13f2ea889a3950c2c2a89c1";// REPLACE_WITH_YOUR_API_KEY;
 
 // ThingSpeak information
 //--------------------------------------------------------------------------------------------------
@@ -91,7 +92,7 @@
 // Soft Ap variables 
 //--------------------------------------------------------------------------------------------------
   const char *APssid = "MeteoStanica-MERA";
-  const char *APpassword = "NeveNa91";  // "" No password for the AP
+  const char *APpassword = "NeveNa91";  // "" prazni navodnici No password
   IPAddress APlocal_IP(192, 168, 4, 1);
   IPAddress APgateway(192, 168, 4, 1);
   IPAddress APsubnet(255, 255, 255, 0);
@@ -151,6 +152,19 @@
   String airQuality = "n/a";            // kvalitet vazduha engleski
   String _airQuality = "Nema ažuriranja";// kvalitet vazduha srpski
   String _color = "Black";              // kolor teksta za kvaliret vazduha
+  #define klima                         // Ako je klimerko u funkciji ako nije onda reemitujem preuzete podatke
+
+// Air Pollution
+//--------------------------------------------------------------------------------------------------
+  float cmp_co;   // Сoncentration of CO      (Carbon monoxide)
+  float cmp_no;   // Сoncentration of NO      (Nitrogen monoxide)
+  float cmp_no2;  // Сoncentration of NO2     (Nitrogen dioxide)
+  float cmp_o3;   // Сoncentration of O3      (Ozone)
+  float cmp_so2;  // Сoncentration of SO2     (Sulphur dioxide)
+  float cmp_pm25; // Сoncentration of PM2.5   (Fine particles matter)
+  float cmp_pm10; // Сoncentration of PM10    (Coarse particulate matter)
+  float cmp_nh3;  // Сoncentration of NH3     (Ammonia)
+  long  cmp_dt;   // Date and time, Unix, UTC
 
 // Time variable
 //--------------------------------------------------------------------------------------------------
@@ -241,9 +255,9 @@ void setup() {
 
 // Kreiram url na weather server sa kojeg preuzimam podatatke u JSON formatu
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-  url_ow += "http://" + String(server_ow) + "/data/2.5/weather?lat=" + String(lat,6) + "&lon=" + String(lon,6) + "&units=" + unit_type + "&appid=" + api_key;
-  url_uv += "http://" + String(server_ow) + "/data/2.5/uvi?appid=" + api_key + "&lat=" + String(lat,2) + "&lon=" + String(lon,2);
-
+  url_ow  += "http://" + String(server_ow) + "/data/2.5/weather?lat=" + String(lat,6) + "&lon=" + String(lon,6) + "&units=" + unit_type + "&appid=" + api_key;
+  url_uv  += "http://" + String(server_ow) + "/data/2.5/uvi?appid=" + api_key + "&lat=" + String(lat,2) + "&lon=" + String(lon,2);
+  url_air += "http://" + String(server_ow) + "/data/2.5/air_pollution?lat=" + String(lat,2) + "&lon=" + String(lon,2) + "&appid=" + api_key;
 // Odgovar web servera u zavisnosti od pristupa nekoj od strana
 //---------------------------------------------------------------------------------------
   server.on("/", handleRoot);           // root
@@ -453,12 +467,109 @@ void getWeatherCondition(){// Json podaci koje preuzimam sa drugih meteo servera
     }
     http.end();   // Close connection
   }
+
+  // Air Pollution - API
+  //---------------------------------------------------------------
+  spln(" Air Pollution data processing");
+  spln(" Connected to json data with API " + url_air);
+  HTTPClient http;  // Deklaracija objekta na class HTTPClient
+
+  #if defined(ESP8266)
+    WiFiClient client;
+    http.begin(client,url_air);
+  #else
+    http.begin(url_air);
+  #endif
+
+  int httpCode = http.GET();
+  spln(" Response : " + ((httpCode == 200) ? "Ok! {code:200}" : String(httpCode)));
+
+  if (httpCode > 0) {
+    String payload = http.getString();
+    StaticJsonDocument<384> doc;
+    // Parse JSON data
+    //--------------------------------------------------------------------
+    const char* json = payload.c_str();
+    spln( " Json data : " + String(json));
+
+    DeserializationError error = deserializeJson(doc, json);
+    if (error) {
+      sp(F(" deserializeJson() failed: "));
+      spln(error.f_str());
+    } else{
+      // Root object
+      // Get main report
+      //----------------------------------
+      JsonObject list = doc["list"][0];
+      JsonObject components = list["components"];
+
+      // Parse Json data
+      //----------------------------------
+      cmp_co   = components["co"]; 
+      cmp_no   = components["no"]; 
+      cmp_no2  = components["no2"];
+      cmp_o3   = components["o3"]; 
+      cmp_so2  = components["so2"];
+      cmp_pm25 = components["pm2_5"];
+      cmp_pm10 = components["pm10"];
+      cmp_nh3  = components["nh3"]; 
+      cmp_dt = list["dt"];
+      char dt[32];
+      sprintf(dt, "%02d.%02d.%02d %02d:%02d", day(cmp_dt), month(cmp_dt), year(cmp_dt), hour(cmp_dt), minute(cmp_dt));
+
+      spln(" -------------------------------------------------------");
+      spln("   Сoncentration of CO   : " + String(cmp_co,2) + " μg/m3");
+      spln("   Сoncentration of NO   : " + String(cmp_no,2) + " μg/m3");
+      spln("   Сoncentration of NO2  : " + String(cmp_no2,2) + " μg/m3");
+      spln("   Сoncentration of 03   : " + String(cmp_o3,2) + " μg/m3");
+      spln("   Сoncentration of SO2  : " + String(cmp_so2,2) + " μg/m3");
+      spln("   Сoncentration of PM2.5: " + String(cmp_pm25,2) + " μg/m3");
+      spln("   Сoncentration of PM10 : " + String(cmp_pm10,2) + " μg/m3");
+      spln("   Сoncentration of NH3  : " + String(cmp_nh3,2) + " μg/m3");
+      spln("   Time                  : " + String(dt));
+      spln(" -------------------------------------------------------\n");
+
+      #if defined(klima)
+        pm25_kli = String(cmp_pm25,0);
+        pm10_kli = String(cmp_pm10,0);
+        sprintf(lastTimeKli,dt);
+        
+        int pm10 = pm10_kli.toInt();
+        if (pm10 <= 20) {
+          airQuality = "Excellent";       // Kvalitet vazduha
+          _airQuality = "Odličan";        // Kvalitet srpski prevod
+          _color = "MediumSeaGreen";      // Boja prikaza kvaliteta
+        
+        } else if (pm10 >= 21 && pm10 <= 40) {
+          airQuality = "Good";
+          _airQuality = "Dobar";
+          _color = "Coral";
+        
+        } else if (pm10 >= 41 && pm10 <= 50) {
+          airQuality = "Acceptable";
+          _airQuality = "Prihvatljiv";
+          _color = "Tomato";
+        
+        } else if (pm10 >= 51 && pm10 <= 100) {
+          airQuality = "Polluted";
+          _airQuality = "Zagađen";
+          _color = "OrangeRed";
+        
+        } else if (pm10 > 100) {
+          airQuality = "Very Polluted";
+          _airQuality = "Jako Zagađen";
+          _color = "Red";
+        }    
+      #endif 
+    }
+  }
+  http.end();  
     
   // UV index
   //---------------------------------------------------------------
   spln(" UV Index data processing");
   spln(" Connected to json data with API " + url_uv);
-  HTTPClient http;  // Deklaracija objekta na class HTTPClient
+  //HTTPClient http;  // Deklaracija objekta na class HTTPClient
 
   #if defined(ESP8266)
     WiFiClient client;
@@ -467,7 +578,7 @@ void getWeatherCondition(){// Json podaci koje preuzimam sa drugih meteo servera
     http.begin(url_uv);
   #endif
 
-  int httpCode = http.GET();
+  httpCode = http.GET();
   spln(" Response : " + ((httpCode == 200) ? "Ok! {code:200}" : String(httpCode)));
 
   if (httpCode > 0) {
@@ -567,7 +678,7 @@ void handleKli() { // Kad stignu podaci sa klimerka
   message += "\n";                            
   message += " -------------------------------------------------------------------\n";
   for (int i = 0; i < server.args(); i++) {
-    message += "   Arg nº" + (String)i + " -> "; // Redni broj parametra
+    message += "   Arg nº" + (String)i + " -> ";// Redni broj parametra
     message += server.argName(i) + ": ";        // Naziv za parametar
     message += server.arg(i) + "\n";            // Vrednost parametra
     delay(10);
@@ -589,18 +700,22 @@ void handleKli() { // Kad stignu podaci sa klimerka
     airQuality = "Excellent";       // Kvalitet vazduha
     _airQuality = "Odličan";        // Kvalitet srpski prevod
     _color = "MediumSeaGreen";      // Boja prikaza kvaliteta
+  
   } else if (pm10 >= 21 && pm10 <= 40) {
     airQuality = "Good";
     _airQuality = "Dobar";
     _color = "Coral";
+  
   } else if (pm10 >= 41 && pm10 <= 50) {
     airQuality = "Acceptable";
     _airQuality = "Prihvatljiv";
     _color = "Tomato";
+  
   } else if (pm10 >= 51 && pm10 <= 100) {
     airQuality = "Polluted";
     _airQuality = "Zagađen";
     _color = "OrangeRed";
+  
   } else if (pm10 > 100) {
     airQuality = "Very Polluted";
     _airQuality = "Jako Zagađen";
@@ -620,7 +735,7 @@ void handleInput() {// Ovde se hendluje strana kada dolaze izmerene vrednosti
   message += "\n";                        
   message += " -------------------------------------------------------------------\n";
   for (int i = 0; i < server.args(); i++) {
-    message += "   Arg nº" + (String)i + " -> "; // Redni broj parametra
+    message += "   Arg nº" + (String)i + " -> ";// Redni broj parametra
     message += server.argName(i) + ": ";        // Naziv za parametar
     message += server.arg(i) + "\n";            // Vrednost parametra
     delay(10);
@@ -679,14 +794,14 @@ void handleInput() {// Ovde se hendluje strana kada dolaze izmerene vrednosti
   spln(" Send measured meteo data to MySQl database.");
   MySQL_connect();
       
-  if (conn.connected()){//ako je konekcija na bazu uspesna
+  if (conn.connected()){// ako je konekcija na bazu uspesna
     //cursor->execute("SET time_zone = '+02:00';");//("SET @@session.time_zone = '+02:00'");//Setovanje time zone za citanje podataka zbog vremenske razlike sa serverom
     cursor->execute("SET character_set_client = 'UTF8MB4';");
     cursor->execute("SET character_set_connection = 'UTF8MB4';");
     cursor->execute("SET character_set_results = 'UTF8MB4';");
     
     spln(" SQL Query : " + String(buf));
-    if(cursor->execute(buf)) { // SQL upit uspesan
+    if(cursor->execute(buf)) {// SQL upit uspesan
       spln(" Recording data to MySQL server successfully.\n");
     }else{ // SQL upit ne uspesan
       spln(" An attempt to save data to the database failed!");
@@ -718,7 +833,7 @@ void handleRoot() {// Osnovna starnica web sajta
   // Tabela
   //---------------------------------------------------------------------------
   s.replace("@@h_tem@@",Tem);           // Temperatura
-  s.replace("@@h_hum@@",Hum);       // Vlaznost vazduha (preuzimam sa klimerkovog BME jer u meteo kucici drugi bme ne pokazuje dobro)
+  s.replace("@@h_hum@@",Hum);           // Vlaznost vazduha (preuzimam sa klimerkovog BME jer u meteo kucici drugi bme ne pokazuje dobro)
   s.replace("@@h_pre@@",Pre);           // Atmosferski pritisak
   s.replace("@@h_winsm@@",Win1);        // Brzina vetra
   s.replace("@@h_wins@@",wind_deg);     // Smer vetra
@@ -738,7 +853,7 @@ void handleRoot() {// Osnovna starnica web sajta
   
   // Widgets
   //---------------------------------------------------------------------------
-  s.replace("@@w_sta@@",weather_main);  // Trenutno stanje vremena
+  s.replace("@@w_sta@@",weather_main);   // Trenutno stanje vremena
   s.replace("@@w_stas@@",txtIconWeather);// Trenutno stanje vremena na srpskom
   s.replace("@@w_icon@@",String(nowID) + ow_f);
   s.replace("@@w_temhead@@",String(round(Tem.toFloat()),0));// Zaokruzena vrednost temperature bez decimala
@@ -765,6 +880,15 @@ void handleRoot() {// Osnovna starnica web sajta
   s.replace("@@k_pm2@@",pm25_kli);      // PM2.5 vrednost
   s.replace("@@k_pm0@@",pm1_kli);       // PM1 vrednost
   s.replace("@@k_last@@",lastTimeKli);  // Zadnje merenje kvaliteta vazduha
+
+  // Air Pollution
+  //---------------------------------------------------------------------------
+  s.replace("@@cmp_co@@",String(cmp_co,2));  // Сoncentration of CO  (Carbon monoxide)
+  s.replace("@@cmp_no@@",String(cmp_no,2));  // Сoncentration of NO  (Nitrogen monoxide)
+  s.replace("@@cmp_no2@@",String(cmp_no2,2));// Сoncentration of NO2 (Nitrogen dioxide)
+  s.replace("@@cmp_o3@@",String(cmp_o3,2));  // Сoncentration of O3  (Ozone)
+  s.replace("@@cmp_so2@@",String(cmp_so2,2));// Сoncentration of SO2 (Sulphur dioxide)
+  s.replace("@@cmp_nh3@@",String(cmp_nh3,2));// Сoncentration of NH3 (Ammonia)
   
   // Your IP adress
   //---------------------------------------------------------------------------
@@ -793,7 +917,7 @@ void handleNotFound(){// Page not found
   }
   server.send(404, "text/plain", message);
 }
-void handleMap() { // Google maps location za moju meteo stanicu
+void handleMap() {// Google maps location za moju meteo stanicu
   server.send(200, "text/html", map_html);
 }
 
@@ -916,3 +1040,4 @@ String WindDir (int code){// Wind Direction and Degrees
   symbolWindDir = "N/A";
   return "N/A";
 }
+// End
