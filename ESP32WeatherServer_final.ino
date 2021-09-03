@@ -502,7 +502,7 @@ void getWeatherCondition(){// Json podaci koje preuzimam sa drugih meteo servera
       JsonObject list = doc["list"][0];
       JsonObject components = list["components"];
 
-      // Parse Json data
+      // Parse Json data - 
       //----------------------------------
       cmp_co   = components["co"]; 
       cmp_no   = components["no"]; 
