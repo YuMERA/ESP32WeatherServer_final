@@ -400,7 +400,6 @@ void getIpCondition(){
     conn.close();          
   }
 }
-
 void getWeatherCondition(){// Json podaci koje preuzimam sa drugih meteo servera. Jos uvek nisam zavrsio kompletna merenja kod mene na stanici
   if (WiFi.status() == WL_CONNECTED) {
     spln(" Weather data processing");
@@ -518,15 +517,18 @@ void getWeatherCondition(){// Json podaci koje preuzimam sa drugih meteo servera
       sprintf(dt, "%02d.%02d.%02d %02d:%02d", day(cmp_dt), month(cmp_dt), year(cmp_dt), hour(cmp_dt), minute(cmp_dt));
 
       spln(" -------------------------------------------------------");
-      spln("   Сoncentration of CO   : " + String(cmp_co,2) + " μg/m3");
-      spln("   Сoncentration of NO   : " + String(cmp_no,2) + " μg/m3");
-      spln("   Сoncentration of NO2  : " + String(cmp_no2,2) + " μg/m3");
-      spln("   Сoncentration of 03   : " + String(cmp_o3,2) + " μg/m3");
-      spln("   Сoncentration of SO2  : " + String(cmp_so2,2) + " μg/m3");
-      spln("   Сoncentration of PM2.5: " + String(cmp_pm25,2) + " μg/m3");
-      spln("   Сoncentration of PM10 : " + String(cmp_pm10,2) + " μg/m3");
-      spln("   Сoncentration of NH3  : " + String(cmp_nh3,2) + " μg/m3");
-      spln("   Time                  : " + String(dt));
+      spln("   Concentration of:");
+      spln(" -------------------------------------------------------");
+      spln("     CO   : " + String(cmp_co,2) + " μg/m3");
+      spln("     NO   : " + String(cmp_no,2) + " μg/m3");
+      spln("     NO2  : " + String(cmp_no2,2) + " μg/m3");
+      spln("     03   : " + String(cmp_o3,2) + " μg/m3");
+      spln("     SO2  : " + String(cmp_so2,2) + " μg/m3");
+      spln("     PM2.5: " + String(cmp_pm25,2) + " μg/m3");
+      spln("     PM10 : " + String(cmp_pm10,2) + " μg/m3");
+      spln("     NH3  : " + String(cmp_nh3,2) + " μg/m3");
+      spln(" -------------------------------------------------------");
+      spln("   Time last measurement : " + String(dt));
       spln(" -------------------------------------------------------\n");
 
       #if defined(klima)
