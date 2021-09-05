@@ -69,7 +69,7 @@
     WebServer server(3003);
   #endif
 
-// Open Weather Map, API, server name ....
+// Open Weather Map, API, server name
 //--------------------------------------------------------------------------------------------------    
   #define unit_type "metric"    // or "imperial"
   #define lat 45.130914         // latitude for Sid,RS
