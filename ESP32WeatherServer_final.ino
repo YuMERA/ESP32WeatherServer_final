@@ -152,7 +152,7 @@
   String airQuality = "n/a";            // kvalitet vazduha engleski
   String _airQuality = "Nema ažuriranja";// kvalitet vazduha srpski
   String _color = "Black";              // kolor teksta za kvaliret vazduha
-  #define klima                         // Ako je klimerko u funkciji ako nije onda reemitujem preuzete podatke
+  //#define klima                         // Ako je klimerko u funkciji ako nije onda reemitujem preuzete podatke
 
 // Air Pollution
 //--------------------------------------------------------------------------------------------------
@@ -747,7 +747,8 @@ void handleInput() {// Ovde se hendluje strana kada dolaze izmerene vrednosti
   spln(" Vreme zadnjeg merenja : " + String(lastTime) + "\n");
   Tem = server.arg("Temperature");      // Temperatura DS18B20
   //Hum = server.arg("Humidity");       // Vlaznost (moj BME)
-  Hum = String(humidity);               // Vlaznost preuzet podataka (ovako sam morao jer BME280 brljavi sa vlaznosti)
+  //Hum = String(humidity);             // Vlaznost preuzet podataka (ovako sam morao jer BME280 brljavi sa vlaznosti)
+  Hum = hum_kli;                        // Vlaznost uzimam sa klimerka kad je u funkciji
   Pre = server.arg("Pressure");         // Pritisak
   Win = server.arg("WinSpeed");         // Brzina vetra (preuzet podatak)
   Vcc = server.arg("Voltage");          // Napon na bateriji
