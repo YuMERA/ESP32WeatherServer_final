@@ -191,8 +191,8 @@ const char about_html[] PROGMEM = R"=====(
                 <h2>Nešto o samoj meterološkoj stanici</h2>
             </div>
             <center><div class="text-box">
-                <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>DiY</b> meteorološka wifi stanica namenjena je za razna meteorološka merenja od kojih izdvajamo nekoliko glavnih a to su 
-                    temperatura, vlažnost vazduha kao i vazdušni pritisak. Osim tih merenja ova stanica meri i kvalitet vazduha u vidu koncetracije suspenzovanih PM čestica i to PM1, PM2.5 i PM10
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>DiY</b> meteorološka wifi stanica namenjena je za razna meteorološka merenja od kojih izdvajamo nekoliko glavnih, a to su 
+                    temperatura, vlažnost vazduha i vazdušni pritisak. Osim tih merenja ova stanica meri i kvalitet vazduha u vidu koncetracije suspenzovanih PM čestica i to PM1, PM2.5 i PM10
                      izražene u μg/m3. Postoji prikaz vrednosti brzine i smera vetra kao i UV index sunčevog zračenja.
                     <br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Večina podatak se očitava na samoj meteo stanici dok neki podaci se preuzimaju sa zvaničnih meteo stanica koje se nalaze u neposrednoj blizini moje
                      lokacije pa shodno tome mogu se smatrati validnim za moju poziciju. Neki od takvih preuzetih podataka su UV index, izlazak i zalazak sunca, trenutna 
