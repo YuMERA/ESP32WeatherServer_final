@@ -123,8 +123,8 @@
 // General Variables
 //--------------------------------------------------------------------------------------------------
   #define Alt "132"                     // Altitude
-  unsigned long previousMillis = 0;     // will store last temp was read
-  const long interval = 50000;          // interval at which to read sensor
+  unsigned long previousMillis = 0;     // memorisanje prethodnog vremena
+  const long interval = 50000;          // interval sa kojim zelimo da citamo sensor
   String content;                       // html kod servera
   String cIp="(null)";                  // string IP adresa za svakog klijenta koji preko veba pristupi weatherstanici
   String Tem="(null)";                  // izmerena temperatura
@@ -170,6 +170,8 @@
 //--------------------------------------------------------------------------------------------------
   #define UTC (1)                       // time zone "+01:00"
   byte tz = 2;                          // Time zone +1 default. Letnje racunjanje vremena +2
+  // Set offset time in seconds to adjust for your timezone, for example:
+  // GMT +1 = 3600
   int timezone = 1 * 3600;              // 3600 za +1 i 7200 za +2 (letnje racunjanje vremena)
   int dst = 1;                          // 1 - aktivno, 0 - neaktivno letnje racunjanje vremena
     
