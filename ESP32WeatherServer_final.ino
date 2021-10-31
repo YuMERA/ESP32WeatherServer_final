@@ -169,7 +169,7 @@
 // Time variable
 //--------------------------------------------------------------------------------------------------
   #define UTC (1)                       // time zone "+01:00"
-  byte tz = 2;                          // Time zone +1 default. Letnje racunjanje vremena +2
+  byte tz = 1;                          // Time zone +1 default. Letnje racunjanje vremena +2
   // Set offset time in seconds to adjust for your timezone, for example:
   // GMT +1 = 3600
   int timezone = 1 * 3600;              // 3600 za +1 i 7200 za +2 (letnje racunjanje vremena)
@@ -607,13 +607,13 @@ void getWeatherCondition(){// Json podaci koje preuzimam sa drugih meteo servera
     // Vrednost UV indexa http://www.hidmet.gov.rs/ciril/prognoza/uv1.php
     if (uv_index.toInt() >= 11)
       uv_index_description = "Ekstremno visok"; 
-    else if(uv_index.toInt() >= 8 || uv_index.toInt() <= 10)
+    else if(uv_index.toInt() >= 8 && uv_index.toInt() <= 10)
       uv_index_description = "Vrlo visok";
-    else if(uv_index.toInt() >= 6 || uv_index.toInt() <= 7)
+    else if(uv_index.toInt() >= 6 && uv_index.toInt() <= 7)
       uv_index_description = "Visok"; 
-    else if(uv_index.toInt() >= 3 || uv_index.toInt() <= 5)
+    else if(uv_index.toInt() >= 3 && uv_index.toInt() <= 5)
       uv_index_description = "Umeren"; 
-    else if(uv_index.toInt() >= 0 || uv_index.toInt() <= 2)
+    else if(uv_index.toInt() >= 0 && uv_index.toInt() <= 2)
       uv_index_description = "Nizak";  
   }
   http.end();
